@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify module package metadata
+        run: |
+          grep -q '\.name = \.ziggy_memory_store' build.zig.zon
+          grep -q '\.version = ' build.zig.zon
+
+      - name: Install SQLite development package
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-dev
+
+      - name: Install Zig
+        run: |
+          ZIG_VERSION=0.15.1
+          curl -fsSL "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" -o zig.tar.xz
+          tar -xf zig.tar.xz
+          echo "$PWD/zig-x86_64-linux-${ZIG_VERSION}" >> "$GITHUB_PATH"
+          zig version
+
+      - name: Build
+        run: zig build
+
+      - name: Test
+        run: zig build test
